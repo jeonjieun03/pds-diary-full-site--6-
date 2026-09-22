@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>플랜두씨 다이어리 — Trinket 시안</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg1: #f4ecdb;
+  --bg2: #ece0c8;
+  --ink: #4a3f2f;
+  --ink-soft: #7a6c53;
+  --rust: #c0603a;
+  --amber: #b3822f;
+  --card: #fffaf0;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.5), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(255,255,255,0.35), transparent 50%),
+    linear-gradient(160deg, var(--bg1), var(--bg2));
+  color: var(--ink);
+  font-family: "Noto Serif KR", serif;
+  overflow-x: hidden;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 46px 20px 60px; text-align: center; }
+
+.title-banner {
+  position: absolute;
+  z-index: 5;
+  filter: drop-shadow(0 8px 10px rgba(74,63,47,0.25));
+}
+.title-banner img { width: 100%; display: block; }
+
+/* ---- 콜라주 패널: 레퍼런스 사진처럼 오브젝트를 빽빽하게 채운다 ---- */
+.collage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1433 / 806;
+}
+.trinket {
+  position: absolute;
+  filter: drop-shadow(0 8px 10px rgba(74,63,47,0.28));
+  user-select: none;
+  pointer-events: none;
+}
+.trinket img { display: block; width: 100%; height: auto; }
+.word {
+  position: absolute;
+  filter: drop-shadow(0 8px 10px rgba(74,63,47,0.25));
+  z-index: 5;
+}
+.word img { width: 100%; display: block; }
+
+.btn--enter {
+  display: inline-block;
+  margin-top: 90px;
+  background: var(--ink);
+  color: var(--card);
+  text-decoration: none;
+  padding: 13px 32px;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-family: "Noto Serif KR", serif;
+  box-shadow: 0 6px 16px rgba(74,63,47,0.25);
+}
+
+.public-notice-mini {
+  display: block;
+  margin: 22px auto 0;
+  max-width: 420px;
+  background: #fff8e6;
+  border: 1px solid var(--amber);
+  color: #6a4e14;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-family: -apple-system, sans-serif;
+}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="collage" id="collage">
+      <!-- title + trinkets injected by JS -->
+    </div>
+
+    <a href="diary/index.html" class="btn--enter">기록 시작하기</a>
+    <p class="public-notice-mini">지금은 로그인이 없어 링크를 아는 사람은 누구나 볼 수 있습니다. 남이 봐도 괜찮은 내용만 넣으세요.</p>
+  </div>
+
+<script src="b64.js"></script>
+<script>
+  const collage = document.getElementById('collage');
+
+  // 중앙 제목 — 사용자가 보내준 참고 사진과 동일한 위치/크기
+  const title = document.createElement('div');
+  title.className = 'title-banner';
+  title.style.top = '17.87%';
+  title.style.left = '25.85%';
+  title.style.width = '50%';
+  const titleImg = document.createElement('img');
+  titleImg.src = IMG['plaque'];
+  titleImg.alt = 'Plan your day. Do your best. See your changes.';
+  title.appendChild(titleImg);
+  collage.appendChild(title);
+
+  // 참고 사진과 동일한 배치/크기 (회전 없음, 중복 요소 없음)
+  // (top/left/width는 패널 기준 %)
+  const layout = [
+    { name: 'elephant',     top: -1.0,  left: 11.3, width: 21.6, rot: 0 },
+    { name: 'clover_ball',  top: -10.5, left: 85.3, width: 17.5, rot: 0 },
+    { name: 'squirrel_cat', top: 10.1,  left: -6.0, width: 16.9, rot: 0 },
+    { name: 'crocodile',    top: -10.6, left: 41.0, width: 20.8, rot: 0 },
+    { name: 'snail',        top: 13.0,  left: 67.7, width: 16.5, rot: 0 },
+    { name: 'deer',         top: 32.5,  left: 88.0, width: 17.7, rot: 0 },
+    { name: 'hamster',      top: 56.2,  left: -5.2, width: 14.6, rot: 0 },
+    { name: 'mushroom',     top: 41.2,  left: 11.6, width: 19.5, rot: 0 },
+    { name: 'penguin',      top: 47.6,  left: 68.5, width: 14.9, rot: 0 },
+    { name: 'tomato',       top: 68.1,  left: 10.1, width: 22.0, rot: 0 },
+    { name: 'jumping_cat',  top: 65.8,  left: 32.5, width: 18.3, rot: 0 },
+    { name: 'sleeping_cat', top: 64.9,  left: 51.1, width: 16.8, rot: 0 },
+    { name: 'cat_bow',      top: 64.8,  left: 83.8, width: 18.7, rot: 0 },
+  ];
+
+  layout.forEach((t) => {
+    const el = document.createElement('div');
+    el.className = 'trinket';
+    el.style.top = t.top + '%';
+    el.style.left = t.left + '%';
+    el.style.width = t.width + '%';
+    el.style.transform = `rotate(${t.rot}deg)`;
+    const img = document.createElement('img');
+    img.src = IMG[t.name];
+    img.alt = t.name;
+    el.appendChild(img);
+    collage.appendChild(el);
+  });
+</script>
+</body>
+</html>

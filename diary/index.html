@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>플랜두씨 다이어리 — 계획, 실제, 돌아보기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Pretendard-Regular&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="bg-trinkets" class="bg-trinkets" aria-hidden="true"></div>
+  <header class="page-header">
+    <p class="eyebrow">Plan · Do · See</p>
+    <h1>플랜두씨 다이어리</h1>
+    <p class="subtitle">계획과 실제 사이의 거리를 눈으로 보는 다이어리</p>
+    <p class="public-notice">지금은 로그인이 없어 링크를 아는 사람은 누구나 볼 수 있습니다. 남이 봐도 괜찮은 내용만 넣으세요.</p>
+    <div id="error-banner" class="error-banner" hidden></div>
+    <div id="flash" class="flash-banner" hidden></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="plans">계획</button>
+    <button class="tab-btn" data-tab="todos">할 일</button>
+    <button class="tab-btn" data-tab="log">실행 기록</button>
+    <button class="tab-btn" data-tab="review">돌아보기</button>
+  </nav>
+
+  <main>
+    <!-- 계획 -->
+    <section class="tab-panel" data-panel="plans">
+      <div class="panel-grid">
+        <div class="panel-col">
+          <h2 id="plan-form-title">새 계획 세우기</h2>
+          <form id="plan-form" class="card-form">
+            <label>제목<input type="text" name="title" required placeholder="예: ALEPH 3주차 과제 완주"></label>
+            <div class="form-row">
+              <label>기간 시작<input type="date" name="period_start" required></label>
+              <label>기간 끝<input type="date" name="period_end" required></label>
+            </div>
+            <div class="form-row">
+              <label>우선순위
+                <select name="priority">
+                  <option value="상">상</option>
+                  <option value="중" selected>중</option>
+                  <option value="하">하</option>
+                </select>
+              </label>
+              <label>예상 시간(분)<input type="number" name="estimated_minutes" min="0" required></label>
+            </div>
+            <label>성공 기준<textarea name="success_criteria" required placeholder="이 계획이 성공했다고 부를 수 있는 상태"></textarea></label>
+            <label>메모(선택)<textarea name="note" placeholder="돌아보기에서 넘어온 고칠 점 등"></textarea></label>
+            <div class="form-actions">
+              <button type="button" class="btn btn--ghost" id="plan-form-reset">새로 작성</button>
+              <button type="submit" class="btn btn--primary" id="plan-form-submit">계획 저장</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel-col">
+          <h2>세운 계획들</h2>
+          <div id="plan-list" class="stack"></div>
+          <div id="plan-history-box" class="history-box" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 할 일 -->
+    <section class="tab-panel" data-panel="todos" hidden>
+      <span id="todo-panel-anchor"></span>
+      <div class="todos-stack">
+        <div class="panel-col">
+          <h2 id="todo-form-title">할 일 추가</h2>
+          <form id="todo-form" class="card-form">
+            <label>딸린 계획
+              <select name="plan_id" id="todo-form-plan" required></select>
+            </label>
+            <label>내용<input type="text" name="title" required placeholder="예: 2주차 발표자료 초안 작성"></label>
+            <div class="form-row">
+              <label>마감일<input type="date" name="due_date"></label>
+              <label>우선순위
+                <select name="priority">
+                  <option value="상">상</option>
+                  <option value="중" selected>중</option>
+                  <option value="하">하</option>
+                </select>
+              </label>
+            </div>
+            <div class="form-row">
+              <label>태그(쉼표로 구분)<input type="text" name="tags" placeholder="예: 발표, 공부"></label>
+              <label>예상 시간(분)<input type="number" name="estimated_minutes" min="0" required></label>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn--ghost" id="todo-form-reset">새로 작성</button>
+              <button type="submit" class="btn btn--primary" id="todo-form-submit">할 일 저장</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel-col">
+          <h2>할 일 목록</h2>
+          <div class="todo-controls">
+            <input type="text" id="todo-search" placeholder="검색어" />
+            <select id="todo-filter-plan"></select>
+            <select id="todo-filter-status">
+              <option value="all">전체 상태</option>
+              <option value="in_progress">진행 중</option>
+              <option value="done">완료</option>
+            </select>
+            <select id="todo-filter-priority">
+              <option value="all">전체 우선순위</option>
+              <option value="상">상</option>
+              <option value="중">중</option>
+              <option value="하">하</option>
+            </select>
+            <input type="text" id="todo-filter-tag" placeholder="태그로 걸러보기" />
+            <select id="todo-sort">
+              <option value="created_desc">최근 추가 순</option>
+              <option value="created_asc">오래된 순</option>
+              <option value="due_asc">마감 임박 순</option>
+              <option value="due_desc">마감 먼 순</option>
+              <option value="priority_asc">우선순위 높은 순</option>
+              <option value="estimated_desc">예상 시간 긴 순</option>
+            </select>
+          </div>
+          <p id="todo-sort-label" class="sort-label"></p>
+          <div id="todo-list" class="stack"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 실행 기록 -->
+    <section class="tab-panel" data-panel="log" hidden>
+      <div class="panel-grid">
+        <div class="panel-col exec-form-wrap">
+          <h2>실행 기록 남기기</h2>
+          <p class="empty-note">완료 여부와 관계없이, 실제로 언제 시작해서 얼마나 걸렸고 어디서 막혔는지를 남깁니다.</p>
+          <form id="exec-form" class="card-form">
+            <label>어떤 할 일인가요
+              <select name="todo_id" id="exec-form-todo" required></select>
+            </label>
+            <div class="form-row">
+              <label>시작 시각<input type="datetime-local" name="started_at" required></label>
+              <label>끝난 시각<input type="datetime-local" name="ended_at" required></label>
+            </div>
+            <label>실제로 걸린 시간(분)<input type="number" name="actual_minutes" min="0" required></label>
+            <label>막혔던 이유(선택)<input type="text" name="blocked_reason" placeholder="없으면 비워두세요"></label>
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary">기록 저장</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel-col">
+          <h2>실행 기록 (Do 로그)</h2>
+          <div id="exec-log-list" class="stack"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 돌아보기 -->
+    <section class="tab-panel" data-panel="review" hidden>
+      <h2>돌아보기 (See)</h2>
+      <div class="calendar-box">
+        <div class="calendar-head">
+          <h3 id="calendar-title">2026년 1월</h3>
+          <div class="calendar-nav">
+            <button type="button" class="btn btn--ghost" id="calendar-prev">‹ 이전 달</button>
+            <button type="button" class="btn btn--ghost" id="calendar-today">이번 달</button>
+            <button type="button" class="btn btn--ghost" id="calendar-next">다음 달 ›</button>
+          </div>
+        </div>
+        <p class="empty-note" style="margin-bottom:8px;">그날 마감인 할 일 가운데 완료한 비율입니다. 날짜를 누르면 그날 마감 할 일로 이동합니다.</p>
+        <div class="calendar-legend">
+          <span class="legend-chip"><span class="legend-swatch cal-lv-0"></span>0%대</span>
+          <span class="legend-chip"><span class="legend-swatch cal-lv-2"></span>중간</span>
+          <span class="legend-chip"><span class="legend-swatch cal-lv-full"></span>100%</span>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+      </div>
+      <div id="review-table"></div>
+      <div class="review-note-area">
+        <h3>이번 주기의 고칠 점 한 줄</h3>
+        <form id="review-note-form" class="inline-form">
+          <input type="text" id="review-note-input" placeholder="예: 예상 시간을 늘 20% 짧게 잡는다" required />
+          <button type="submit" class="btn btn--primary">고칠 점 저장</button>
+        </form>
+        <div id="review-notes" class="stack"></div>
+      </div>
+      <div class="export-area">
+        <h3>내 자료 내보내기</h3>
+        <button id="export-btn" class="btn btn--primary">전체 자료 JSON으로 내려받기</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="modal" class="modal" hidden></div>
+
+  <footer class="page-footer">
+    <p>SKT ALEPH 과제 6 — 플랜두씨 다이어리 1</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="b64.js"></script>
+  <script src="js/decor.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+{
+  "package_id": "aleph-t06-pds-diary-schema-v2",
+  "schema_version": "2.0.0",
+  "timezone_rule": {
+    "storage": "모든 시각 컬럼(timestamptz)은 UTC로 저장한다.",
+    "display": "화면에는 Asia/Seoul(KST, UTC+9)로 환산해 보여준다.",
+    "date_only_fields": "period_start, period_end, due_date는 시각이 없는 날짜(date) 값이며, 'KST 기준 오늘' 판정(지연 여부 계산 등)에 항상 Asia/Seoul 자정 기준을 사용한다."
+  },
+  "tables": {
+    "plans": {
+      "description": "계획. 수정해도 이 표의 행은 계속 갱신되고, 고치기 전 값은 plan_revisions에 스냅샷으로 남는다.",
+      "columns": {
+        "id": "uuid, PK",
+        "title": "text, 계획 제목",
+        "period_start": "date, 계획 기간 시작",
+        "period_end": "date, 계획 기간 끝",
+        "priority": "text, '상'|'중'|'하'",
+        "success_criteria": "text, 성공 기준",
+        "estimated_minutes": "int, 예상 시간(분)",
+        "note": "text, 자유 메모(돌아보기에서 넘어온 고칠 점 등)",
+        "carried_from_review_id": "uuid, review_notes.id 참조(추적용, FK 제약 없음)",
+        "created_at": "timestamptz",
+        "updated_at": "timestamptz, 수정 시마다 갱신"
+      }
+    },
+    "plan_revisions": {
+      "description": "계획 수정 이력. plans를 UPDATE하기 직전에 현재 행 전체를 snapshot으로 여기 먼저 저장한다.",
+      "columns": {
+        "id": "uuid, PK",
+        "plan_id": "uuid, FK -> plans.id (ON DELETE CASCADE)",
+        "snapshot": "jsonb, 고치기 전 plans 행 전체",
+        "revised_at": "timestamptz, 수정이 일어난 시각"
+      }
+    },
+    "todos": {
+      "description": "할 일. 계획 하나에 여러 개가 딸린다.",
+      "columns": {
+        "id": "uuid, PK",
+        "plan_id": "uuid, FK -> plans.id (ON DELETE CASCADE)",
+        "title": "text",
+        "status": "text, 'in_progress'|'done'",
+        "due_date": "date, nullable",
+        "priority": "text, '상'|'중'|'하'",
+        "tags": "text[]",
+        "estimated_minutes": "int, 예상 시간(분)",
+        "completed_at": "timestamptz, nullable, 완료로 바뀐 시각(UTC)",
+        "created_at": "timestamptz",
+        "updated_at": "timestamptz"
+      },
+      "delete_rule": "삭제는 실제 행 삭제(hard delete)이며, 이후 모든 집계는 '남아 있는' 행만 대상으로 하므로 자동으로 '지우지 않은 할 일'만 반영된다."
+    },
+    "executions": {
+      "description": "실행 기록(Do 로그). 계획/할 일 원본 값을 절대 덮어쓰지 않는, 완전히 별도의 이력 표.",
+      "columns": {
+        "id": "uuid, PK",
+        "todo_id": "uuid, FK -> todos.id (ON DELETE CASCADE)",
+        "started_at": "timestamptz",
+        "ended_at": "timestamptz",
+        "actual_minutes": "numeric, 실제로 걸린 시간(분)",
+        "blocked_reason": "text, nullable — 값이 있으면 해당 할 일은 '막힘'으로 집계된다",
+        "created_at": "timestamptz"
+      },
+      "idempotency_rule": "완료 처리는 'UPDATE todos SET status=done WHERE id=$1 AND status<>done RETURNING id' 로 원자적으로 수행하고, 행이 반환될 때만 executions에 1건을 추가한다. 이미 완료 상태에서 다시 눌러도 UPDATE가 0행을 반환하므로 executions는 늘어나지 않는다."
+    },
+    "review_notes": {
+      "description": "돌아보기에서 정한 '고칠 점' 한 줄. 다음 계획 생성 시 이 값을 가져와 plans.note에 반영하고 carried_to_plan_id를 채운다.",
+      "columns": {
+        "id": "uuid, PK",
+        "note": "text",
+        "carried_to_plan_id": "uuid, FK -> plans.id, nullable",
+        "created_at": "timestamptz"
+      }
+    }
+  },
+  "relations": [
+    "plans 1 --- N todos (todos.plan_id)",
+    "plans 1 --- N plan_revisions (plan_revisions.plan_id)",
+    "todos 1 --- N executions (executions.todo_id)",
+    "review_notes 0..1 --- 0..1 plans (review_notes.carried_to_plan_id, plans.carried_from_review_id)"
+  ],
+  "aggregation_rules": {
+    "계획_수": "해당 plan_id를 가진, 삭제되지 않고 남아 있는 todos 행 수",
+    "완료_수": "그중 status='done'인 행 수",
+    "지연_수": "status<>'done' 이고 due_date < KST 기준 오늘 인 행 수 (완료된 항목은 제외하므로 중복 집계 없음)",
+    "막힘_수": "executions.blocked_reason이 하나라도 비어있지 않은 값으로 존재하는 todo_id의 distinct 개수",
+    "예상_시간": "대상 todos.estimated_minutes 합계",
+    "실제_시간": "대상 todos에 딸린 executions.actual_minutes 합계",
+    "차이": "실제_시간 - 예상_시간, 대상이 없으면 0"
+  }
+}
