@@ -1,0 +1,26 @@
+{
+  "package_id": "aleph-t07-pds-diary-auth-schema-v3",
+  "schema_version": "3.0.0",
+  "base": "aleph-t06-pds-diary-schema-v2 (schema-v2.0.0), 같은 Supabase 프로젝트를 그대로 쓰되 표만 새로 판다",
+  "why_separate_tables": "Supabase 무료 요금제는 프로젝트를 최대 2개까지만 만들 수 있고, 과제 8에서 새 프로젝트가 하나 더 필요하다. 그래서 과제 7을 위해 새 Supabase 프로젝트를 만들지 않고, 과제 6과 같은 프로젝트 안에 접미사 _t07이 붙은 새 표를 두어 완전히 분리했다. 과제 6이 쓰는 원본 표(plans, todos, executions, plan_revisions, review_notes)와 그 RLS 정책은 이 작업으로 전혀 바뀌지 않는다 — 과제 6 결과물 주소는 로그인 없이 계속 그대로 열린다.",
+  "new_tables": {
+    "plans_t07": "plans와 컬럼이 같고 user_id(auth.users 참조, not null, default auth.uid())가 추가됨",
+    "plan_revisions_t07": "plan_revisions와 컬럼이 같고 user_id 추가, plan_id는 plans_t07을 참조",
+    "todos_t07": "todos와 컬럼이 같고 user_id 추가, plan_id는 plans_t07을 참조",
+    "executions_t07": "executions와 컬럼이 같고 user_id 추가, todo_id는 todos_t07을 참조",
+    "review_notes_t07": "review_notes와 컬럼이 같고 user_id 추가, carried_to_plan_id는 plans_t07을 참조"
+  },
+  "migration": "sql/schema-t07.sql STEP 2 — 원본 표(plans 등)의 기존 행을 같은 id로 _t07 표에 복사(하드 카피)하고, 소유자를 '가장 먼저 가입한 계정'으로 지정한다. 원본 행은 지우거나 바꾸지 않는다.",
+  "rls_policy": {
+    "target": "_t07로 끝나는 표 5개에만 적용. 원본 표의 anon_all_* 정책은 손대지 않는다.",
+    "rule": "own_rows_*_t07 : for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid())"
+  },
+  "new_functions": {
+    "update_todo_secure(p_todo_id uuid, p_patch jsonb) returns todos_t07": "주인이 아니면 errcode 42501을 raise → PostgREST가 HTTP 403으로 변환. 주인이면 patch 내용으로 todos_t07을 갱신.",
+    "delete_todo_secure(p_todo_id uuid) returns void": "주인이 아니면 42501(403). 주인이면 삭제.",
+    "update_plan_secure(p_plan_id uuid, p_patch jsonb) returns plans_t07": "주인이 아니면 42501(403). 주인이면 patch 내용으로 plans_t07을 갱신."
+  },
+  "auth_provider": "Supabase Auth (GoTrue) — 이메일/비밀번호. 비밀번호는 앱의 표를 거치지 않고 auth.users 내부에 bcrypt로 저장되며, 클라이언트는 이 값을 절대 읽을 수 없다.",
+  "session_identifier": "JWT access token(짧은 만료) + refresh token 조합. access token은 프로젝트 기본값상 발급 후 3600초(1시간) 뒤 만료.",
+  "known_gap": "GoTrue의 access token은 상태를 갖지 않는 JWT라, 로그아웃(signOut)은 refresh token만 서버에서 폐기하고 이미 발급된 access token 자체는 자기 만료 시각까지는 여전히 유효하다. 즉시 강제 폐기는 이 구현에 없다 — 설명서 ⑥ 참고."
+}
