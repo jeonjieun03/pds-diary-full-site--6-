@@ -17,6 +17,22 @@ const state = {
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+// 저장 버튼을 빠르게 두 번 눌러도 같은 내용이 두 번 저장되지 않도록,
+// 요청이 끝날 때까지 제출 버튼을 잠깐 비활성화한다.
+function guardSubmit(form, handler) {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn && btn.disabled) return; // 이미 처리 중이면 무시
+    if (btn) btn.disabled = true;
+    try {
+      await handler(e);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+}
+
 async function loadAll() {
   const data = await api.fetchAllData();
   Object.assign(state, data);
@@ -161,8 +177,7 @@ async function showPlanHistory(plan) {
   box.appendChild(closeBtn);
 }
 
-$("#plan-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
+guardSubmit($("#plan-form"), async (e) => {
   const f = e.target;
   const payload = {
     title: f.title.value.trim(),
@@ -399,8 +414,7 @@ function resetTodoForm() {
   $("#todo-form-submit").textContent = "할 일 저장";
 }
 
-$("#todo-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
+guardSubmit($("#todo-form"), async (e) => {
   const f = e.target;
   if (!f.plan_id.value) {
     alert("먼저 계획을 하나 세워주세요.");
@@ -504,8 +518,7 @@ function openCompleteModal(todo) {
       form.actual_minutes.value = mins;
     }
   });
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  guardSubmit(form, async () => {
     const started = new Date(form.started_at.value).toISOString();
     const ended = new Date(form.ended_at.value).toISOString();
     const result = await api.completeTodoWithExecution(todo.id, {
@@ -551,8 +564,7 @@ function openStandaloneLogModal(todo) {
     const en = form.ended_at.value;
     if (s && en) form.actual_minutes.value = minutesBetween(s + ":00", en + ":00");
   });
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  guardSubmit(form, async () => {
     await api.addStandaloneExecution(todo.id, {
       started_at: new Date(form.started_at.value).toISOString(),
       ended_at: new Date(form.ended_at.value).toISOString(),
@@ -608,8 +620,7 @@ execForm.addEventListener("input", () => {
     execForm.actual_minutes.value = minutesBetween(s + ":00", en + ":00");
   }
 });
-execForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
+guardSubmit(execForm, async (e) => {
   const f = e.target;
   if (!f.todo_id.value) {
     alert("먼저 계획과 할 일을 하나 이상 만들어주세요.");
@@ -854,8 +865,7 @@ function renderReviewNotes() {
   }
 }
 
-$("#review-note-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
+guardSubmit($("#review-note-form"), async () => {
   const input = $("#review-note-input");
   const val = input.value.trim();
   if (!val) return;
