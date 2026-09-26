@@ -421,6 +421,9 @@ main {
   font-size: 0.9rem;
   color: var(--ink-soft);
 }
+.account-bar[hidden] {
+  display: none;
+}
 .auth-screen {
   max-width: 420px;
   margin: 24px auto 48px;
