@@ -6,5 +6,5 @@
 //    (실제 접근 제어는 RLS 정책이 하고, 이번 과제는 로그인이 없으므로 읽기/쓰기를 모두 열어 둔 상태입니다.)
 // 3. SQL Editor에서 sql/schema.sql 내용을 그대로 실행합니다.
 
-export const SUPABASE_URL = "https://kphstwymzmddwruvbgvv.supabase.co";
-export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtwaHN0d3ltem1kZHdydXZiZ3Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2NTYxNjYsImV4cCI6MjEwNTIzMjE2Nn0.yAJF9WbIm3Vjf1vsz4UUVwut7mYdUN3D0uNan8qXFWs";
+export const SUPABASE_URL = "https://lqdxjbnpcugyiyfsknxq.supabase.co";
+export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZHhqYm5wY3VneWl5ZnNrbnhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzM5NTksImV4cCI6MjEwNTgwOTk1OX0.I46DfnKE4hoKEjM3J1itT4B7lBEDXSpA-pakhparirA";
